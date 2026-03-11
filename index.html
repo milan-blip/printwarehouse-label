@@ -323,6 +323,7 @@
         <select id="direction">
           <option value="up">Up</option>
           <option value="down">Down</option>
+          <option value="none">None</option>
         </select>
       </div>
 
@@ -337,12 +338,10 @@
 
       <div class="buttons">
         <button class="primary" id="printBtn">Print Label</button>
-        <button class="secondary" id="pdfBtn">Download PDF</button>
-      </div>
-
-      <div class="buttons-secondary">
         <button class="secondary" id="downloadBtn">Download SVG</button>
       </div>
+
+      <div class="buttons-secondary"></div>
 
       <div class="note">
         <strong>Layout tuning:</strong><br>
@@ -387,13 +386,20 @@
     const valueText = document.getElementById('valueText');
     const arrowColumn = document.getElementById('arrowColumn');
     const printBtn = document.getElementById('printBtn');
-    const pdfBtn = document.getElementById('pdfBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
     const directionPreview = document.getElementById('directionPreview');
 
     function updateArrowDirection() {
-      arrowColumn.className = 'arrow-column';
       const dir = direction.value;
+      arrowColumn.className = 'arrow-column';
+
+      if (dir === 'none') {
+        arrowColumn.style.visibility = 'hidden';
+        directionPreview.textContent = 'Current arrow: None';
+        return;
+      }
+
+      arrowColumn.style.visibility = 'visible';
       arrowColumn.classList.add('arrow-' + dir);
       directionPreview.textContent = 'Current arrow: ' + dir.charAt(0).toUpperCase() + dir.slice(1);
     }
@@ -453,33 +459,6 @@
       URL.revokeObjectURL(url);
     }
 
-    async function downloadPdf() {
-      if (codeType.value !== 'barcode' || !codeValue.value.trim()) return;
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({
-        orientation: 'landscape',
-        unit: 'in',
-        format: [6, 4]
-      });
-
-      doc.setFillColor(255, 255, 255);
-      doc.roundedRect(0.10, 0.10, 5.80, 3.80, 0.10, 0.10, 'F');
-
-      const dir = direction.value;
-      drawArrow(doc, 0.34, 0.36, 0.62, 2.44, dir);
-
-      const svgMarkup = new XMLSerializer().serializeToString(barcodeSvg);
-      const svgDataUri = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgMarkup);
-      doc.addImage(svgDataUri, 'SVG', 0.94, 0.28, 4.70, 2.52);
-
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(26);
-      doc.text(codeValue.value.trim() || 'NO VALUE', 3.29, 3.20, { align: 'center' });
-
-      doc.save((codeValue.value.trim() || 'label') + '.pdf');
-    }
-
     function drawArrow(doc, x, y, w, h, dir) {
       const ptsUp = [
         [x + w * 0.5, y],
@@ -521,8 +500,7 @@
     });
 
     printBtn.addEventListener('click', () => window.print());
-    pdfBtn.addEventListener('click', downloadPdf);
-    downloadBtn.addEventListener('click', downloadSvg);
+        downloadBtn.addEventListener('click', downloadSvg);
 
     renderBarcode();
   </script>
